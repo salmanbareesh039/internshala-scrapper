@@ -1,0 +1,8 @@
+{
+    "name": "internshala-scraper",
+    "version": "0.1",
+    "main": "main.py",
+    "env": {
+      "APIFY_PYTHON_VERSION": "3.10"
+    }
+  }

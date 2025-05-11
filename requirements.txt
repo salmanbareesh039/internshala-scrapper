@@ -1,0 +1,6 @@
+apify-client
+aiohttp
+tqdm
+beautifulsoup4
+pandas
+selenium
