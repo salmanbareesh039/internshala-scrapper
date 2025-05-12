@@ -1,4 +1,10 @@
 {
+  "name": "internshala-scraper",
+  "version": "1.0.0",
+  "buildTag": "latest",
+  "env": {
+    "PYTHON_VERSION": "3.9"
+  },
   "title": "Internshala Scraper",
   "description": "Scrape internship listings from Internshala based on custom filters like job category, location, work from home options, and more. Collect detailed information about internships including titles, companies, locations, stipends, durations, and hiring status.",
   "readme": "Internshala Scraper that collects internship data with customizable filters.\n\nThis actor scrapes internship listings from Internshala based on parameters you provide. You can search for internships by job category, location, work-from-home status, part-time options, and minimum stipend requirements.\n\nThe data collected includes job titles, company names, locations, stipend amounts, durations, and additional information like 'actively hiring' status.",
