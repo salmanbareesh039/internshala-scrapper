@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import re
 import hashlib
-from apify_client import ApifyClient
 import os
+from apify_client import ApifyClient
 
 # For Selenium (as fallback)
 from selenium import webdriver
@@ -46,9 +46,9 @@ class ImprovedInternshalaScraperWithMaxResults:
 
         for page in range(1, required_pages + 1):
             if page == 1:
-                urls.append(self.base_url)
+                urls.append(self.base_url.rstrip('/'))
             else:
-                urls.append(f"{self.base_url}/page-{page}")
+                urls.append(f"{self.base_url.rstrip('/')}/page-{page}")
         return urls
 
     def generate_hash(self, internship):
@@ -303,10 +303,10 @@ class ImprovedInternshalaScraperWithMaxResults:
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--disable-gpu')
             options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-
+            options.binary_location = "/usr/bin/chromium-browser"
             # Try to use default Service, fallback to chromedriver in PATH
             try:
-                driver = webdriver.Chrome(service=Service(), options=options)
+                driver = webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=options)
             except Exception:
                 driver = webdriver.Chrome(options=options)  # Fallback if Service() fails
 
@@ -412,7 +412,7 @@ class ImprovedInternshalaScraperWithMaxResults:
     async def scrape_page(self, url):
         """Scrape a single page"""
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(cookie_jar=aiohttp.DummyCookieJar()) as session:
                 html = await self.fetch_page_async(session, url)
 
                 # If aiohttp fails, fall back to Selenium
@@ -565,13 +565,8 @@ def main():
     scraper = ImprovedInternshalaScraperWithMaxResults(base_url=url, max_results=max_results)
     results = scraper.run_scraper()
 
-    # Save results to Apify dataset (fix: use default dataset id)
-    client = ApifyClient()
-    default_dataset_id = os.getenv('APIFY_DEFAULT_DATASET_ID')
-    if default_dataset_id:
-        client.dataset(default_dataset_id).push_items(results)
-    else:
-        print('Warning: APIFY_DEFAULT_DATASET_ID not set. Results not saved to Apify dataset.')
+    # Save results to file instead of Apify dataset
+    scraper.save_results()
 
 def slugify(text):
     return text.lower().replace('.', '').replace(' ', '-')
