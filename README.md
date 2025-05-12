@@ -1,8 +1,8 @@
-# Internshala Internship Scraper
+# Internshala Scraper
 
 ## 🤖 Overview
 
-This Apify actor scrapes internship listings from Internshala.com based on custom filters like job category, location, work-from-home preferences, and more. With this actor, you can easily collect detailed information about internships and use the data for research, job hunting, aggregation services, or any other purpose.
+This Apify actor scrapes jobs and internship listings from Internshala.com based on custom filters like job category, location, work-from-home preferences, and more. With this actor, you can easily collect detailed information about internships and use the data for research, job hunting, aggregation services, or any other purpose.
 
 ## ✅ Features
 
