@@ -303,7 +303,7 @@ class ImprovedInternshalaScraperWithMaxResults:
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--disable-gpu')
             options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-            options.binary_location = "/usr/bin/chromium-browser"
+            options.binary_location = "/usr/bin/chromium"
             # Try to use default Service, fallback to chromedriver in PATH
             try:
                 driver = webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=options)
