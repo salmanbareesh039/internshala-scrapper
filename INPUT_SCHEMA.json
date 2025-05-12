@@ -1,15 +1,7 @@
-{
-  "name": "internshala-scraper",
-  "version": "1.0.0",
-  "buildTag": "latest",
-  "env": {
-    "PYTHON_VERSION": "3.9"
-  },
-  "title": "Internshala Scraper",
-  "description": "Scrape internship listings from Internshala based on custom filters like job category, location, work from home options, and more. Collect detailed information about internships including titles, companies, locations, stipends, durations, and hiring status.",
-  "readme": "Internshala Scraper that collects internship data with customizable filters.\n\nThis actor scrapes internship listings from Internshala based on parameters you provide. You can search for internships by job category, location, work-from-home status, part-time options, and minimum stipend requirements.\n\nThe data collected includes job titles, company names, locations, stipend amounts, durations, and additional information like 'actively hiring' status.",
-  "storageService": {
-    "datasetRecordSchema": {
+"storageService": {
+  "datasetRecordSchema": {
+    "type": "object",
+    "properties": {
       "title": {
         "type": "string",
         "description": "Title of the internship"
@@ -48,66 +40,5 @@
         "description": "URL of the company logo"
       }
     }
-  },
-  "input": {
-    "title": "Input schema for the Internshala Scraper",
-    "type": "object",
-    "schemaVersion": 1,
-    "properties": {
-      "max_results": {
-        "title": "Maximum Results",
-        "type": "integer",
-        "description": "Maximum number of internships to collect",
-        "default": 30,
-        "prefill": 30,
-        "minimum": 1,
-        "maximum": 1000
-      },
-      "job_category": {
-        "title": "Job Category",
-        "type": "string",
-        "description": "Category of internships to search for (e.g., Software Development, Marketing)",
-        "default": "Software Development",
-        "prefill": "Software Development",
-        "editor": "textfield"
-      },
-      "work_from_home": {
-        "title": "Work From Home",
-        "type": "boolean",
-        "description": "Search for work from home internships",
-        "default": true
-      },
-      "location": {
-        "title": "Location",
-        "type": "string",
-        "description": "Location for internships (used if work from home is false)",
-        "default": "Delhi",
-        "prefill": "Delhi",
-        "editor": "textfield"
-      },
-      "part_time": {
-        "title": "Part Time",
-        "type": "boolean",
-        "description": "Search for part-time internships",
-        "default": false
-      },
-      "stipend": {
-        "title": "Minimum Stipend",
-        "type": "string",
-        "description": "Minimum stipend requirement (leave empty if not applicable)",
-        "default": "",
-        "editor": "textfield"
-      },
-      "pages_to_scrape": {
-        "title": "Pages to Scrape",
-        "type": "integer",
-        "description": "Maximum number of pages to scrape",
-        "default": 20,
-        "prefill": 20,
-        "minimum": 1,
-        "maximum": 100
-      }
-    },
-    "required": []
   }
 }
