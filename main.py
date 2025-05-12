@@ -379,7 +379,6 @@ class ImprovedInternshalaScraperWithMaxResults:
         print(f"Processing {len(cards)} cards from {url}")
 
         # Process all cards on this page
-        page_internships = []
         for card in cards:
             # Stop if we've reached max_results
             if self.valid_internship_count >= self.max_results:
@@ -396,7 +395,7 @@ class ImprovedInternshalaScraperWithMaxResults:
 
             # Add the internship and its hash
             self.visited_hashes.add(card_hash)
-            page_internships.append(internship_data)
+            self.all_internships.append(internship_data)
             self.valid_internship_count += 1
 
             # Debug output for successful extraction
@@ -407,7 +406,7 @@ class ImprovedInternshalaScraperWithMaxResults:
                 print(f"Reached max results limit ({self.max_results})")
                 break
 
-        return page_internships
+        return []
 
     async def scrape_page(self, url):
         """Scrape a single page"""
@@ -438,18 +437,16 @@ class ImprovedInternshalaScraperWithMaxResults:
             tasks.append(self.scrape_page(url))
 
         # Process tasks as they complete
-        results = []
         for task in tqdm(asyncio.as_completed(tasks), total=len(tasks), desc="Scraping pages"):
             if self.valid_internship_count >= self.max_results:
                 break
 
             try:
-                page_results = await task
-                results.extend(page_results)
+                await task  # process_html now appends directly to self.all_internships
             except Exception as e:
                 print(f"Error in async task: {str(e)}")
 
-        return results
+        return self.all_internships
 
     def run_scraper(self):
         """Execute the scraping process"""
