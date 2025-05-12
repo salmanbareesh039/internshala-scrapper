@@ -4,11 +4,11 @@ import time
 import json
 from tqdm import tqdm
 from bs4 import BeautifulSoup
-import pandas as pd
 import re
 import hashlib
 import os
 from apify_client import ApifyClient
+from apify import Actor
 
 # For Selenium (as fallback)
 from selenium import webdriver
@@ -499,44 +499,15 @@ class ImprovedInternshalaScraperWithMaxResults:
             if "early_applicant" not in internship:
                 internship["early_applicant"] = False
 
-    def save_results(self, filename="internshala_internships.json"):
-        """Save the results to a JSON file"""
-        if not self.all_internships:
-            print("No data to save!")
-            return
-
-        # Sort results by company name for better readability
-        self.all_internships.sort(key=lambda x: x.get('company', ''))
-
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(self.all_internships, f, indent=2, ensure_ascii=False)
-        print(f"Data saved to '{filename}'")
-
-        # Also save as CSV for convenience
-        try:
-            df = pd.DataFrame(self.all_internships)
-            csv_filename = filename.replace('.json', '.csv')
-            df.to_csv(csv_filename, index=False)
-            print(f"Data also saved to '{csv_filename}'")
-
-            # Show data stats
-            print("\nData Statistics:")
-            print(f"- Number of internships: {len(df)}")
-            if 'title' in df.columns:
-                print(f"- Number of unique roles: {df['title'].nunique()}")
-            if 'company' in df.columns:
-                print(f"- Number of unique companies: {df['company'].nunique()}")
-            if 'location' in df.columns and df['location'].count() > 0:
-                locations = df['location'].value_counts()
-                print(f"- Top locations: {dict(locations.head(3))}")
-            if 'actively_hiring' in df.columns:
-                active_count = df['actively_hiring'].sum() if df['actively_hiring'].dtype == bool else 0
-                print(f"- Actively hiring: {active_count} ({active_count/len(df)*100:.1f}%)")
-
-        except Exception as e:
-            print(f"Could not save as CSV or generate stats: {str(e)}")
+    def save_results(self, filename=None):
+        """Save the results using Apify Actor.push_data instead of JSON/CSV"""
+        # This method is now unused, but kept for compatibility
+        pass
 
 def main():
+    import asyncio
+    from apify import Actor
+
     # Get Apify input
     input_json = os.getenv('APIFY_INPUT', '{}')
     input_data = json.loads(input_json)
@@ -558,12 +529,14 @@ def main():
         stipend=stipend
     )
 
-    # Run scraper
-    scraper = ImprovedInternshalaScraperWithMaxResults(base_url=url, max_results=max_results)
-    results = scraper.run_scraper()
+    async def run_actor():
+        async with Actor:
+            scraper = ImprovedInternshalaScraperWithMaxResults(base_url=url, max_results=max_results)
+            results = scraper.run_scraper()
+            for internship_data in results:
+                await Actor.push_data(internship_data)
 
-    # Save results to file instead of Apify dataset
-    scraper.save_results()
+    asyncio.run(run_actor())
 
 def slugify(text):
     return text.lower().replace('.', '').replace(' ', '-')
