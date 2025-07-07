@@ -504,56 +504,77 @@ class ImprovedInternshalaScraperWithMaxResults:
         # This method is now unused, but kept for compatibility
         pass
 
-def main():
-    import asyncio
-    from apify import Actor
+async def main():
+    async with Actor:
+        # Get input from Apify (expects input like { "job_category": "Data Science", "work_from_home": "yes", ... })
+        input_data = await Actor.get_input() or {}
+        
+        # Debug: Print the input data to see what's being received
+        print(f"Input data received: {input_data}")
 
-    # Get Apify input
-    input_json = os.getenv('APIFY_INPUT', '{}')
-    input_data = json.loads(input_json)
+        # Extract parameters from input with better error handling
+        job_category = input_data.get('job_category')
+        if not job_category:
+            print("Warning: No job_category provided, using default 'Data Science'")
+            job_category = 'Data Science'  # Changed default from 'Accounts'
+        
+        work_from_home = input_data.get('work_from_home')
+        if work_from_home is None:
+            print("Warning: No work_from_home provided, using default 'no'")
+            work_from_home = 'no'  # Changed default from 'yes' to 'no'
+        
+        location = input_data.get('location')
+        if location is None:
+            print("Warning: No location provided, using empty string")
+            location = ''
+        
+        part_time = input_data.get('part_time')
+        if part_time is None:
+            print("Warning: No part_time provided, using default 'no'")
+            part_time = 'no'
+        
+        stipend = input_data.get('stipend')
+        if stipend is None:
+            print("Warning: No stipend provided, using empty string")
+            stipend = ''
+        
+        max_results_input = input_data.get('max_results')
+        if max_results_input is None:
+            print("Warning: No max_results provided, using default 30")
+            max_results = 30
+        else:
+            try:
+                max_results = int(max_results_input)
+            except (ValueError, TypeError):
+                print(f"Warning: Invalid max_results value '{max_results_input}', using default 30")
+                max_results = 30
 
-    # Debug: Print the input data to see what's being received
-    print(f"Input data received: {input_data}")
+        # Debug: Print extracted parameters
+        print(f"Job Category: {job_category}")
+        print(f"Work from Home: {work_from_home}")
+        print(f"Location: {location}")
+        print(f"Part Time: {part_time}")
+        print(f"Stipend: {stipend}")
+        print(f"Max Results: {max_results}")
 
-    # Extract parameters from input with better error handling
-    job_category = input_data.get('job_category')
-    if not job_category:
-        print("Warning: No job_category provided, using default 'Data Science'")
-        job_category = 'Data Science'  # Changed default from 'Accounts'
-    
-    work_from_home = input_data.get('work_from_home', 'yes')
-    location = input_data.get('location', '')
-    part_time = input_data.get('part_time', 'no')
-    stipend = input_data.get('stipend', '')
-    max_results = int(input_data.get('max_results', 30))
+        # Generate URL
+        url = generate_url(
+            job_category=job_category,
+            work_from_home=work_from_home,
+            location=location,
+            part_time=part_time,
+            stipend=stipend
+        )
 
-    # Debug: Print extracted parameters
-    print(f"Job Category: {job_category}")
-    print(f"Work from Home: {work_from_home}")
-    print(f"Location: {location}")
-    print(f"Part Time: {part_time}")
-    print(f"Stipend: {stipend}")
-    print(f"Max Results: {max_results}")
+        print(f"Generated URL: {url}")
 
-    # Generate URL
-    url = generate_url(
-        job_category=job_category,
-        work_from_home=work_from_home,
-        location=location,
-        part_time=part_time,
-        stipend=stipend
-    )
-
-    print(f"Generated URL: {url}")
-
-    async def run_actor():
-        async with Actor:
-            scraper = ImprovedInternshalaScraperWithMaxResults(base_url=url, max_results=max_results)
-            results = scraper.run_scraper()
-            for internship_data in results:
-                await Actor.push_data(internship_data)
-
-    asyncio.run(run_actor())
+        # Run the scraper
+        scraper = ImprovedInternshalaScraperWithMaxResults(base_url=url, max_results=max_results)
+        results = scraper.run_scraper()
+        
+        # Push results to Apify
+        for internship_data in results:
+            await Actor.push_data(internship_data)
 
 def slugify(text):
     return text.lower().replace('.', '').replace(' ', '-')
@@ -590,4 +611,4 @@ def generate_url(job_category=None, work_from_home=None, location=None, part_tim
 
 # Only run if this script is executed directly
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
