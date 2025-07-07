@@ -512,13 +512,28 @@ def main():
     input_json = os.getenv('APIFY_INPUT', '{}')
     input_data = json.loads(input_json)
 
-    # Extract parameters from input
-    job_category = input_data.get('job_category', 'Accounts')
+    # Debug: Print the input data to see what's being received
+    print(f"Input data received: {input_data}")
+
+    # Extract parameters from input with better error handling
+    job_category = input_data.get('job_category')
+    if not job_category:
+        print("Warning: No job_category provided, using default 'Data Science'")
+        job_category = 'Data Science'  # Changed default from 'Accounts'
+    
     work_from_home = input_data.get('work_from_home', 'yes')
     location = input_data.get('location', '')
     part_time = input_data.get('part_time', 'no')
     stipend = input_data.get('stipend', '')
     max_results = int(input_data.get('max_results', 30))
+
+    # Debug: Print extracted parameters
+    print(f"Job Category: {job_category}")
+    print(f"Work from Home: {work_from_home}")
+    print(f"Location: {location}")
+    print(f"Part Time: {part_time}")
+    print(f"Stipend: {stipend}")
+    print(f"Max Results: {max_results}")
 
     # Generate URL
     url = generate_url(
@@ -528,6 +543,8 @@ def main():
         part_time=part_time,
         stipend=stipend
     )
+
+    print(f"Generated URL: {url}")
 
     async def run_actor():
         async with Actor:
