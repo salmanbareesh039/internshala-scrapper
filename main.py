@@ -178,14 +178,8 @@ class ImprovedInternshalaScraperWithMaxResults:
             ]
 
             experience_selectors = [
-                ".ic-16-briefcase + span", ".experience",
-                ".row-1-item .ic-16-briefcase + span",
-                ".other_detail_item .ic-16-briefcase + span",
-                ".internship-detail .ic-16-briefcase + span",
-                "span:contains('year')", "span:contains('month')",
-                ".experience-text", ".experience_text"
+                ".row-1-item", ".other_detail_item", ".internship_other_details_container", ".internship-detail"
             ]
-
             # Extract other details
             duration = None
             for selector in duration_selectors:
@@ -203,18 +197,20 @@ class ImprovedInternshalaScraperWithMaxResults:
                     stipend = re.sub(r'^Stipend\s*:', '', stipend).strip()
                     break
 
-            experience = None
             for selector in experience_selectors:
-                experience = get_text(selector, experience)
+                elements = card.select(selector)
+                for el in elements:
+                    icon = el.select_one("i.ic-16-briefcase")
+                    if icon:
+                        span = el.select_one("span")
+                        if span:
+                            experience = span.text.strip()
+                            # Clean up patterns like "1 year(s)" to "1 year"
+                            experience = re.sub(r'\(s\)', '', experience)
+                            experience = re.sub(r'\s+', ' ', experience).strip()
+                            break
                 if experience:
-                    # Clean up the experience text to remove any labels
-                    experience = re.sub(r'^Experience\s*:', '', experience).strip()
-                    # Handle different experience formats
-                    if 'year' in experience.lower() or 'month' in experience.lower():
-                        # Clean up common patterns like "1 year(s)" to "1 year"
-                        experience = re.sub(r'\(s\)', '', experience)
-                        experience = re.sub(r'\s+', ' ', experience).strip()
-                        break
+                    break
 
             # Add cleaned duration, stipend, and experience if available
             if duration:
