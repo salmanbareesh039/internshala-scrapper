@@ -197,6 +197,7 @@ class ImprovedInternshalaScraperWithMaxResults:
                     stipend = re.sub(r'^Stipend\s*:', '', stipend).strip()
                     break
 
+            experience = None 
             for selector in experience_selectors:
                 elements = card.select(selector)
                 for el in elements:
