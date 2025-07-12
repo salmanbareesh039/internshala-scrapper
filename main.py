@@ -107,10 +107,31 @@ class ImprovedInternshalaScraperWithMaxResults:
 
             # Extract text using our improved selectors
             title = None
-            for selector in title_selectors:
-                title = get_text(selector, title)
-                if title:
-                    break
+            job_url = None
+            
+            # First try to get job URL from job-title-href
+            job_title_element = card.select_one(".job-title-href")
+            if job_title_element:
+                title = job_title_element.text.strip()
+                title = re.sub(r'\s+', ' ', title).strip()
+                
+                # Extract href for job URL
+                href = job_title_element.get('href')
+                if href:
+                    # Make sure it's a full URL
+                    if href.startswith('/'):
+                        job_url = f"https://internshala.com{href}"
+                    elif not href.startswith('http'):
+                        job_url = f"https://internshala.com/{href}"
+                    else:
+                        job_url = href
+            
+            # If we didn't get title from job-title-href, try other selectors
+            if not title:
+                for selector in title_selectors:
+                    title = get_text(selector, title)
+                    if title:
+                        break
 
             company = None
             for selector in company_selectors:
@@ -133,6 +154,12 @@ class ImprovedInternshalaScraperWithMaxResults:
             internship_data["title"] = title
             internship_data["company"] = company
 
+            # Add job URL if we found it
+            if job_url:
+                internship_data["job_url"] = job_url
+                # Generate apply link by adding the referral parameter
+                internship_data["apply_link"] = f"{job_url}?amp;referral=web_share"
+
             # Add location if available
             if location:
                 internship_data["location"] = location
@@ -148,6 +175,15 @@ class ImprovedInternshalaScraperWithMaxResults:
             stipend_selectors = [
                 ".stipend", ".stipend_container", ".internship_other_details_container span:nth-child(2)",
                 ".stipend-text", "span:contains('Stipend')", ".stipend_text"
+            ]
+
+            experience_selectors = [
+                ".ic-16-briefcase + span", ".experience",
+                ".row-1-item .ic-16-briefcase + span",
+                ".other_detail_item .ic-16-briefcase + span",
+                ".internship-detail .ic-16-briefcase + span",
+                "span:contains('year')", "span:contains('month')",
+                ".experience-text", ".experience_text"
             ]
 
             # Extract other details
@@ -167,12 +203,28 @@ class ImprovedInternshalaScraperWithMaxResults:
                     stipend = re.sub(r'^Stipend\s*:', '', stipend).strip()
                     break
 
-            # Add cleaned duration and stipend if available
+            experience = None
+            for selector in experience_selectors:
+                experience = get_text(selector, experience)
+                if experience:
+                    # Clean up the experience text to remove any labels
+                    experience = re.sub(r'^Experience\s*:', '', experience).strip()
+                    # Handle different experience formats
+                    if 'year' in experience.lower() or 'month' in experience.lower():
+                        # Clean up common patterns like "1 year(s)" to "1 year"
+                        experience = re.sub(r'\(s\)', '', experience)
+                        experience = re.sub(r'\s+', ' ', experience).strip()
+                        break
+
+            # Add cleaned duration, stipend, and experience if available
             if duration:
                 internship_data["duration"] = duration
 
             if stipend:
                 internship_data["stipend"] = stipend
+
+            if experience:
+                internship_data["experience"] = experience
 
             # Boolean fields - check multiple class names
             actively_hiring_selectors = [
@@ -256,24 +308,28 @@ class ImprovedInternshalaScraperWithMaxResults:
                     logo_url = f"/{logo_url}"
                 internship_data["logo_url"] = logo_url
 
-            # Try to extract any application link
-            link_selectors = [
-                "a.view_detail_button", "a.apply_button",
-                "a.view-detail-button", "a.view-detail", "a.view_detail",
-                ".view-detail a", ".apply a", ".apply_now a", "a.apply_now"
-            ]
+            # If we didn't get job_url from job-title-href, try other link selectors
+            if not job_url:
+                link_selectors = [
+                    "a.view_detail_button", "a.apply_button",
+                    "a.view-detail-button", "a.view-detail", "a.view_detail",
+                    ".view-detail a", ".apply a", ".apply_now a", "a.apply_now"
+                ]
 
-            apply_link = None
-            for selector in link_selectors:
-                apply_link = get_attr(selector, "href", apply_link)
-                if apply_link:
-                    break
-
-            if apply_link:
-                # Make sure it's a full URL
-                if not apply_link.startswith("http"):
-                    apply_link = f"https://internshala.com{apply_link}"
-                internship_data["apply_link"] = apply_link
+                for selector in link_selectors:
+                    href = get_attr(selector, "href")
+                    if href:
+                        # Make sure it's a full URL
+                        if href.startswith('/'):
+                            job_url = f"https://internshala.com{href}"
+                        elif not href.startswith('http'):
+                            job_url = f"https://internshala.com/{href}"
+                        else:
+                            job_url = href
+                        
+                        internship_data["job_url"] = job_url
+                        internship_data["apply_link"] = f"{job_url}?amp;referral=web_share"
+                        break
 
             return internship_data
 
@@ -399,7 +455,13 @@ class ImprovedInternshalaScraperWithMaxResults:
             self.valid_internship_count += 1
 
             # Debug output for successful extraction
+            job_url = internship_data.get('job_url', 'No URL')
+            apply_link = internship_data.get('apply_link', 'No apply link')
+            experience = internship_data.get('experience', 'No experience specified')
             print(f"Extracted internship: {internship_data.get('title')} at {internship_data.get('company')}")
+            print(f"  Job URL: {job_url}")
+            print(f"  Apply Link: {apply_link}")
+            print(f"  Experience: {experience}")
 
             # Stop if we've reached max_results
             if self.valid_internship_count >= self.max_results:
