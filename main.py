@@ -33,6 +33,22 @@ class ImprovedInternshalaScraperWithMaxResults:
             'Upgrade-Insecure-Requests': '1',
         }
 
+    def generate_apply_url(self, job_url):
+        """Generate the correct apply URL from job URL"""
+        if not job_url:
+            return None
+        
+        # Transform /job/detail/ to /application/form/
+        # Example: https://internshala.com/job/detail/fresher-stem-robotic-trainer-job-in-coimbatore-at-tinkedge-tescom-technologies-pvt-ltd1752077847
+        # Becomes: https://internshala.com/application/form/fresher-stem-robotic-trainer-job-in-coimbatore-at-tinkedge-tescom-technologies-pvt-ltd1752077847
+        
+        if '/job/detail/' in job_url:
+            apply_url = job_url.replace('/job/detail/', '/application/form/')
+            return apply_url
+        
+        # If the URL doesn't match the expected pattern, return None
+        return None
+
     def generate_urls(self):
         """Generate URLs for all pages to be scraped, limited by max_results"""
         urls = []
@@ -154,11 +170,16 @@ class ImprovedInternshalaScraperWithMaxResults:
             internship_data["title"] = title
             internship_data["company"] = company
 
-            # Add job URL if we found it
+            # Add job URL and generate apply URL if we found job URL
             if job_url:
                 internship_data["job_url"] = job_url
-                # Generate apply link by adding the referral parameter
-                internship_data["apply_link"] = f"{job_url}?amp;referral=web_share"
+                # Generate apply URL using the correct transformation
+                apply_url = self.generate_apply_url(job_url)
+                if apply_url:
+                    internship_data["apply_url"] = apply_url
+                else:
+                    # Fallback to the old method if the new pattern doesn't match
+                    internship_data["apply_url"] = f"{job_url}?amp;referral=web_share"
 
             # Add location if available
             if location:
@@ -325,7 +346,13 @@ class ImprovedInternshalaScraperWithMaxResults:
                             job_url = href
                         
                         internship_data["job_url"] = job_url
-                        internship_data["apply_link"] = f"{job_url}?amp;referral=web_share"
+                        # Generate apply URL using the correct transformation
+                        apply_url = self.generate_apply_url(job_url)
+                        if apply_url:
+                            internship_data["apply_url"] = apply_url
+                        else:
+                            # Fallback to the old method if the new pattern doesn't match
+                            internship_data["apply_url"] = f"{job_url}?amp;referral=web_share"
                         break
 
             return internship_data
@@ -453,11 +480,11 @@ class ImprovedInternshalaScraperWithMaxResults:
 
             # Debug output for successful extraction
             job_url = internship_data.get('job_url', 'No URL')
-            apply_link = internship_data.get('apply_link', 'No apply link')
+            apply_url = internship_data.get('apply_url', 'No apply URL')
             experience = internship_data.get('experience', 'No experience specified')
             print(f"Extracted internship: {internship_data.get('title')} at {internship_data.get('company')}")
             print(f"  Job URL: {job_url}")
-            print(f"  Apply Link: {apply_link}")
+            print(f"  Apply URL: {apply_url}")
             print(f"  Experience: {experience}")
 
             # Stop if we've reached max_results
